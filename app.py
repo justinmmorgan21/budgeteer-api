@@ -1,40 +1,89 @@
+from flask import Flask, render_template, url_for #, request
+# from flask_cors import CORS
+# import db
 import pdfplumber
 import re
 
-class Transaction:
-    def __init__(self, type, date, amount, payee):
-        self.type = type
-        self.date = date
-        self.amount = amount
-        self.payee = payee
+app = Flask(__name__)
+# CORS(app)
 
-    def __str__(self):
-        return self.type.upper() + " - " + self.date + ",  $" + self.amount + ",  payee: " + self.payee
+# @app.route("/tasks.json")
+# def index():
+#     return db.tasks_all()
+
+# @app.route("/tasks.json", methods=["POST"])
+# def create():
+#     name = request.form.get("name")
+#     estimated_time = request.form.get("estimated_time")
+#     deadline = request.form.get("deadline")
+#     return db.tasks_create(name, estimated_time, deadline)
+
+# @app.route("/tasks/<id>.json")
+# def show(id):
+#     return db.tasks_find_by_id(id)
+
+# @app.route("/tasks/<id>.json", methods=["PATCH"])
+# def update(id):
+#     name = request.form.get("name")
+#     estimated_time = request.form.get("estimated_time")
+#     deadline = request.form.get("deadline")
+#     return db.tasks_update_by_id(id, name, estimated_time, deadline)
+
+# @app.route("/tasks/<id>.json", methods=["DELETE"])
+# def destroy(id):
+#     return db.tasks_destroy_by_id(id)
+text = "test"
+
+
+@app.route('/')
+def index():
+    return render_template("main.html")
+    # str = "<p>Hello, World!</p>"
+    # str += "<p>TO DO list</p>"
+    # str += "<ol><li>check out numpy</li><li>check out pandas</li></ol>"
+    # str += "<button onClick={return redirect(url_for('route_b'))}>"+text+"</button>"
+    # str += '<a href="{{ url_for('home') }}">Home</a>'
+    # return str
+
+@app.route('/budget')
+def transaction_reader():
+    return "<p>transactions</p>"
+
+
+# class Transaction:
+#     def __init__(self, type, date, amount, payee):
+#         self.type = type
+#         self.date = date
+#         self.amount = amount
+#         self.payee = payee
+
+#     def __str__(self):
+#         return self.type.upper() + " - " + self.date + ",  $" + self.amount + ",  payee: " + self.payee
     
-def parseLine(line):
-    index = line.find(" ")
-    date = line[0 : index]
-    remainder = line[index + 1 :]
-    index = remainder.find(" ")
-    amount = remainder[0 : index]
-    type = "deposit"
-    if (amount[0] == "("):
-        type = "withdrawal"   
-        amount = amount[1: len(amount) - 1]
-    payee = remainder[remainder.find(" ") + 1 : ]
-    transactions.append(Transaction(type, date, amount, payee))
+# def parseLine(line):
+#     index = line.find(" ")
+#     date = line[0 : index]
+#     remainder = line[index + 1 :]
+#     index = remainder.find(" ")
+#     amount = remainder[0 : index]
+#     type = "deposit"
+#     if (amount[0] == "("):
+#         type = "withdrawal"   
+#         amount = amount[1: len(amount) - 1]
+#     payee = remainder[remainder.find(" ") + 1 : ]
+#     transactions.append(Transaction(type, date, amount, payee))
 
-transactions = []
+# transactions = []
 
-with pdfplumber.open("./BECU-Statement-21-Mar-2025.PDF") as pdf:
-    for i in range(0, 7):
-        page = pdf.pages[i]
-        cropped = page.crop((0, 0.1 * float(page.height), page.width, page.height))
-        page_text = cropped.extract_text()
-        lines = page_text.splitlines()
-        for line in lines:
-            if re.search("^[0-9]+/[0-9]+/", line):
-                parseLine(line)
+# with pdfplumber.open("./BECU-Statement-21-Mar-2025.PDF") as pdf:
+#     for i in range(0, 7):
+#         page = pdf.pages[i]
+#         cropped = page.crop((0, 0.1 * float(page.height), page.width, page.height))
+#         page_text = cropped.extract_text()
+#         lines = page_text.splitlines()
+#         for line in lines:
+#             if re.search("^[0-9]+/[0-9]+/", line):
+#                 parseLine(line)
 
-for transaction in transactions:
-    print(transaction)
+# for transaction in transactions:
+#     print(transaction)
