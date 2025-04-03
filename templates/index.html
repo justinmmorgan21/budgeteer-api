@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div>
+  <h1>{% block title %} Budget Buddy {% endblock %}</h1>
+  <ul>
+    {% for transaction in transactions %}
+    <li>
+      <span style="display: inline-block; width: 160px;">{{ transaction.type }}</span>
+      <span style="display: inline-block; width: 100px;">{{ transaction.date }}</span>
+      <span style="display: inline-block; width: 140px;"> ${{ transaction.amount }}</span>
+      <span>{{ transaction.payee }}</span>
+    </li>
+    <!-- {{ transaction.date + " , $" + transaction.amount + " , " + transaction.payee}}</li> -->
+    {% endfor %}
+  </ul>
+
+  <!-- <button onClick={return redirect(url_for('route_b'))}>"+text+"</button> -->
+  <!-- <a href="{{ url_for('transaction_reader') }}"><button>Go to Transactions</button></a> -->
+</div>
+{% endblock %}
