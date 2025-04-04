@@ -1,1 +1,4 @@
 .venv/
+BECU-Statement-21-Mar-2025.PDF
+__pycache__/
+*.pyc
