@@ -1,9 +1,18 @@
-from flask import Flask, render_template, url_for #, request
-# from flask_cors import CORS
-# import db
+from models.base import Base, engine, SessionLocal
 from models.transaction import Transaction
 
-app = Flask(__name__, template_folder="../templates")
+Base.metadata.create_all(engine)
+
+transactions = Transaction.read_statement("./data/BECU-Statement-21-Mar-2025.PDF")
+
+session = SessionLocal()
+for t in transactions:
+    session.add(t)
+session.commit()
+
+for tx in session.query(Transaction).all():
+    print(tx)
+
 # CORS(app)
 
 # @app.route("/tasks.json")
@@ -33,14 +42,14 @@ app = Flask(__name__, template_folder="../templates")
 #     return db.tasks_destroy_by_id(id)
 
 
-@app.route('/')
-def index():
-    transactions = Transaction.read_statement()
-    return render_template("index.html", transactions=transactions)
+# @app.route('/')
+# def index():
+#     transactions = Transaction.read_statement()
+#     return render_template("index.html", transactions=transactions)
 
-@app.route('/budget')
-def transaction_reader():
-    return "<p>transactions</p>"
+# @app.route('/budget')
+# def transaction_reader():
+#     return "<p>transactions</p>"
 
 
 
