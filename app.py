@@ -1,17 +1,12 @@
 from flask import Flask, jsonify
+from sqlalchemy import select
 from models.base import SessionLocal
 from models.transaction import Transaction
 
 app = Flask(__name__)
 
-@app.route('/transactions')
-def get_transactions():
-  session = SessionLocal()
-  transactions = session.query(Transaction).all()
-  return jsonify([t.to_dict() for t in transactions])
-
-@app.route('/upload', methods=['POST'])
-def upload_statement():
+@app.route('/transactions/upload', methods=['POST'])
+def create():
   file = request.files['file']
   file_path = f"./uploads/{file.filename}"
   file.save(file_path)
@@ -22,6 +17,18 @@ def upload_statement():
       session.add(t)
   session.commit()
   return jsonify({"message": f"{len(transactions)} transactions added."})
+
+@app.route('/transactions')
+def index():
+  session = SessionLocal()
+  transactions = session.scalars(select(Transaction)).all()
+  return jsonify([t.to_dict() for t in transactions])
+
+@app.route('/transactions/<int:id>')
+def show(id):
+   session = SessionLocal()
+   transaction = session.scalar(select(Transaction).where(Transaction.id==id))
+   return jsonify(transaction.to_dict())
 
 if __name__ == "__main__":
   app.run(debug=True)
