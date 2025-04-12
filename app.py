@@ -1,9 +1,11 @@
 from flask import Flask, jsonify
 from sqlalchemy import select
-from models.base import SessionLocal
-from models.transaction import Transaction
+from flask_cors import CORS
+from models import SessionLocal
+from models import Transaction
 
 app = Flask(__name__)
+CORS(app)
 
 @app.route('/transactions/upload', methods=['POST'])
 def create():
