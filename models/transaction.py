@@ -1,20 +1,27 @@
 import pdfplumber
 import re
-from sqlalchemy import Column, String, Float, Integer
-from .base import Base
+from typing import List, Optional
+from sqlalchemy import ForeignKey, String, Numeric
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from base import Base
+from datetime import date
+from decimal import Decimal
+from category_tag import Category_Tag
 
 class Transaction(Base):
   __tablename__ = "transactions"
 
-  id = Column(Integer, primary_key=True)
-  type = Column(String)
-  date = Column(String)
-  amount = Column(Float)
-  payee = Column(String)
+  id: Mapped[int] = mapped_column(primary_key=True)
+  type: Mapped[str] = mapped_column(String(10))
+  date: Mapped[date]
+  amount: Mapped[float] = mapped_column(Numeric(10, 2))
+  payee: Mapped[str]
+  category_tag_id: Mapped[int] = mapped_column(ForeignKey("category_tag.id"))
 
+  category_tag: Mapped["Category_Tag"] = relationship(back_populates="transactions")
 
   def __repr__(self):
-      return f"<Transaction({self.type}, {self.date}, {self.amount}, {self.payee}>"
+      return f"<Transaction({self.type}, {self.date}, {self.amount}, {self.payee})>"
   
   def to_dict(self):
       return {
@@ -23,21 +30,27 @@ class Transaction(Base):
           "date": self.date,
           "amount": self.amount,
           "payee": self.payee,
+          "category_tag_id": self.category_tag_id
       }
   
   @staticmethod
   def parseLine(line, transactions):
     index = line.find(" ")
-    date = line[0:index]
+    date_str = line[0:index]
+    year = "20" + date_str[-2:]
+    month = date_str[0:2]
+    day = date_str[3:5]
+    date_obj = date(int(year), int(month), int(day))
     remainder = line[index + 1:]
     index = remainder.find(" ")
     amount = remainder[0:index]
+    amount = Decimal(amount.replace(",",""))
     tx_type = "DEPOSIT"
     if (amount[0] == "("):
         tx_type = "WITHDRAWAL"   
         amount = amount[1:-1]
     payee = remainder[remainder.find(" ") + 1:]
-    return Transaction(type=tx_type, date=date, amount=float(amount.replace(",","")), payee=payee)
+    return Transaction(type=tx_type, date=date_obj, amount=amount, payee=payee)
 
   @staticmethod
   def read_statement(pdf_path):
