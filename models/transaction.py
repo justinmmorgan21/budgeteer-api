@@ -3,20 +3,19 @@ import re
 from typing import List, Optional
 from sqlalchemy import ForeignKey, String, Numeric
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from base import Base
+from .base import Base
 from datetime import date
 from decimal import Decimal
-from category_tag import Category_Tag
 
 class Transaction(Base):
-  __tablename__ = "transactions"
+  __tablename__ = "transaction"
 
   id: Mapped[int] = mapped_column(primary_key=True)
   type: Mapped[str] = mapped_column(String(10))
   date: Mapped[date]
   amount: Mapped[float] = mapped_column(Numeric(10, 2))
   payee: Mapped[str]
-  category_tag_id: Mapped[int] = mapped_column(ForeignKey("category_tag.id"))
+  category_tag_id: Mapped[Optional[int]] = mapped_column(ForeignKey("category_tags.id"))
 
   category_tag: Mapped["Category_Tag"] = relationship(back_populates="transactions")
 
@@ -44,11 +43,11 @@ class Transaction(Base):
     remainder = line[index + 1:]
     index = remainder.find(" ")
     amount = remainder[0:index]
-    amount = Decimal(amount.replace(",",""))
     tx_type = "DEPOSIT"
     if (amount[0] == "("):
         tx_type = "WITHDRAWAL"   
         amount = amount[1:-1]
+    amount = Decimal(amount.replace(",",""))
     payee = remainder[remainder.find(" ") + 1:]
     return Transaction(type=tx_type, date=date_obj, amount=amount, payee=payee)
 

@@ -3,14 +3,17 @@ from sqlalchemy import ForeignKey, String, Numeric
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .base import Base
 from datetime import date
-from transaction import Transaction
 
 class Category_Tag(Base):
-  __tablename__ = "category_tag"
+  __tablename__ = "category_tags"
 
   id: Mapped[int] = mapped_column(primary_key=True)
-  category_id: Mapped[int] = mapped_column(ForeignKey("category.id"))
-  tag_id: Mapped[int] = mapped_column(ForeignKey("tag.id"))
+  category_id: Mapped[int] = mapped_column(ForeignKey("categories.id"))
+  tag_id: Mapped[int] = mapped_column(ForeignKey("tags.id"))
+
+  category: Mapped["Category"] = relationship(back_populates="category_tags")
+  tag: Mapped["Tag"] = relationship(back_populates="category_tags")
+
 
   transactions: Mapped[List["Transaction"]] = relationship(
     back_populates="category_tag", cascade="all, delete-orphan"
