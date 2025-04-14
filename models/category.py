@@ -9,6 +9,7 @@ class Category(Base):
 
   id: Mapped[int] = mapped_column(primary_key=True)
   name: Mapped[str]
+  archived: Mapped[bool] = mapped_column(default=False)
 
   category_tags: Mapped[List["Category_Tag"]] = relationship(
     back_populates="category", cascade="all, delete-orphan"
@@ -21,5 +22,6 @@ class Category(Base):
     return {
         "id": self.id,
         "name": self.name,
+        "archived": self.archived,
         "category_tags": [ct.to_dict() for ct in self.category_tags]
     }
