@@ -1,7 +1,7 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from sqlalchemy import select
 from flask_cors import CORS
-from models import SessionLocal, Transaction, Category, Tag
+from models import SessionLocal, Transaction, Category, Tag, Category_Tag
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -9,7 +9,7 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 
 
 @app.route('/transactions/upload', methods=['POST'])
-def create():
+def transactions_create():
   file = request.files['file']
   file_path = f"./uploads/{file.filename}"
   file.save(file_path)
@@ -34,7 +34,7 @@ def transaction_index():
     session.close()
 
 @app.route('/transactions/<int:id>')
-def show(id):
+def transaction_show(id):
    session = SessionLocal()
    try:
     transaction = session.scalar(select(Transaction).where(Transaction.id==id))
@@ -58,6 +58,28 @@ def tag_index():
     tags = session.scalars(select(Tag)).all()
     return jsonify([t.to_dict() for t in tags])
    finally:
+    session.close()
+
+@app.route('/category_tags', methods=['POST'])
+def category_tag_create():
+  session = SessionLocal()
+  try:
+    category = request.form.get("category")
+    tag = request.form.get("tag")
+    ct = Category_Tag(category_id=category, tag_id=tag)
+    session.add(ct)
+    session.commit()
+    return jsonify(ct.to_dict())
+  finally:
+    session.close()
+
+@app.route('/category_tags')
+def category_tag_index():
+  session = SessionLocal()
+  try:
+    cts = session.scalars(select(Category_Tag)).all()
+    return jsonify([ct.to_dict() for ct in cts])
+  finally:
     session.close()
 
 if __name__ == "__main__":
