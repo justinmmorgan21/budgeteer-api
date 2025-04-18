@@ -18,10 +18,16 @@ class Tag(Base):
   def __repr__(self):
     return f"<Tag({self.name}>"
   
-  def to_dict(self):
-    return {
+  def to_dict(self, include_transactions: bool=False):
+    data = {
         "id": self.id,
         "name": self.name,
         "archived": self.archived,
-        "category_tags": [ct.to_dict() for ct in self.category_tags]
     }
+    if include_transactions:
+      transactions = []
+      for ct in self.category_tags:
+        transactions.extend(ct.transactions)
+      data["transactions"] = [tx.to_dict() for tx in transactions]
+
+    return data

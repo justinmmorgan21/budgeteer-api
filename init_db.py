@@ -17,7 +17,7 @@ def seed_transaction_data():
 def seed_category_data():
   session = SessionLocal()
   try:
-    category_names = ["Income", "Utilities", "Food", "Doctor"]
+    category_names = ["Misc", "Income", "Utilities", "Food", "Doctor"]
     for cn in category_names:
       category = Category(name=cn)
       session.add(category)
@@ -26,11 +26,10 @@ def seed_category_data():
   finally:
         session.close()
 
-
 def seed_tag_data():
   session = SessionLocal()
   try:
-    tag_names = ["from checking to savings", "FISD paycheck", "groceries", "Coserv electric", "Atmos gas"]
+    tag_names = ["Misc", "from checking to savings", "FISD paycheck", "groceries", "Coserv electric", "Atmos gas"]
     for tn in tag_names:
       tag = Tag(name=tn)
       session.add(tag)

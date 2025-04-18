@@ -8,7 +8,7 @@ from datetime import date
 from decimal import Decimal
 
 class Transaction(Base):
-  __tablename__ = "transaction"
+  __tablename__ = "transactions"
 
   id: Mapped[int] = mapped_column(primary_key=True)
   type: Mapped[str] = mapped_column(String(10))
@@ -22,14 +22,15 @@ class Transaction(Base):
   def __repr__(self):
       return f"<Transaction({self.type}, {self.date}, {self.amount}, {self.payee})>"
   
-  def to_dict(self):
+  def to_dict(self, include_category_tag: bool=True):
       return {
           "id": self.id,
           "type": self.type,
           "date": self.date,
           "amount": self.amount,
           "payee": self.payee,
-          "category_tag_id": self.category_tag_id
+          "category_tag_id": self.category_tag_id,
+          "category_tag": self.category_tag.to_dict(include_relations=True, include_transactions=False) if include_category_tag and self.category_tag else None
       }
   
   @staticmethod

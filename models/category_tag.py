@@ -22,10 +22,16 @@ class Category_Tag(Base):
   def __repr__(self):
       return f"<Category_Tag({self.category_id}, {self.tag_id}>"
   
-  def to_dict(self):
-      return {
+  def to_dict(self, include_relations=False, include_transactions=False):
+      data = {
           "id": self.id,
           "category_id": self.category_id,
           "tag_id": self.tag_id,
-          "transactions": [t.to_dict() for t in self.transactions]
       }
+      if include_relations:
+         data["category"] = self.category.to_dict() if self.category else None
+         data["tag"] = self.tag.to_dict() if self.tag else None
+      if include_transactions:
+         data["transactions"] = [t.to_dict(include_category_tag=False) for t in self.transactions]
+      
+      return data
