@@ -67,7 +67,8 @@ def transaction_update(id):
     transaction = session.scalar(select(Transaction).where(Transaction.id==id))
     if not transaction:
             raise NotFound(f"Transaction with id {id} not found.")
-    transaction.category_id = int(category_id) if category_id else None
+    transaction.category_id = int(category_id) if (category_id := request.form.get("category")) else transaction.category_id
+    transaction.tag_id = int(tag_id) if (tag_id := request.form.get("tag")) else transaction.tag_id
     session.commit()
     return jsonify(transaction.to_dict())
    except Exception as e:
