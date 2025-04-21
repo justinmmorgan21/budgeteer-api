@@ -11,7 +11,10 @@ class Category(Base):
   name: Mapped[str]
   archived: Mapped[bool] = mapped_column(default=False)
 
-  category_tags: Mapped[List["Category_Tag"]] = relationship(
+  tags: Mapped[List["Tag"]] = relationship(
+    back_populates="category", cascade="all, delete-orphan"
+  )
+  transactions: Mapped[List["Transaction"]] = relationship(
     back_populates="category", cascade="all, delete-orphan"
   )
 
@@ -23,11 +26,9 @@ class Category(Base):
         "id": self.id,
         "name": self.name,
         "archived": self.archived,
+        "tags": [tag.to_dict() for tag in self.tags]
     }
     if include_transactions:
-      transactions = []
-      for ct in self.category_tags:
-        transactions.extend(ct.transactions)
-      data["transactions"] = [tx.to_dict() for tx in transactions]
+      data["transactions"] = [tx.to_dict(False, False) for tx in self.transactions]
 
     return data

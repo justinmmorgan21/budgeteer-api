@@ -11,7 +11,13 @@ class Tag(Base):
   name: Mapped[str]
   archived: Mapped[bool] = mapped_column(default=False)
 
-  category_tags: Mapped[List["Category_Tag"]] = relationship(
+  category_id: Mapped[Optional[int]] = mapped_column(ForeignKey("categories.id"))
+
+  category: Mapped["Category"] = relationship(
+    back_populates="tags"
+  )
+  
+  transactions: Mapped[List["Transaction"]] = relationship(
     back_populates="tag", cascade="all, delete-orphan"
   )
 
@@ -21,13 +27,11 @@ class Tag(Base):
   def to_dict(self, include_transactions: bool=False):
     data = {
         "id": self.id,
+        "category_id": self.category_id,
         "name": self.name,
         "archived": self.archived,
     }
     if include_transactions:
-      transactions = []
-      for ct in self.category_tags:
-        transactions.extend(ct.transactions)
-      data["transactions"] = [tx.to_dict() for tx in transactions]
+      data["transactions"] = [tx.to_dict(False,False) for tx in self.transactions]
 
     return data

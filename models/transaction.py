@@ -15,22 +15,26 @@ class Transaction(Base):
   date: Mapped[date]
   amount: Mapped[float] = mapped_column(Numeric(10, 2))
   payee: Mapped[str]
-  category_tag_id: Mapped[Optional[int]] = mapped_column(ForeignKey("category_tags.id"))
-
-  category_tag: Mapped["Category_Tag"] = relationship(back_populates="transactions")
+  category_id: Mapped[Optional[int]] = mapped_column(ForeignKey("categories.id"))
+  tag_id: Mapped[Optional[int]] = mapped_column(ForeignKey("tags.id"))
+  
+  category: Mapped[Optional["Category"]] = relationship(back_populates="transactions")
+  tag: Mapped[Optional["Tag"]] = relationship(back_populates="transactions")
 
   def __repr__(self):
       return f"<Transaction({self.type}, {self.date}, {self.amount}, {self.payee})>"
   
-  def to_dict(self, include_category_tag: bool=True):
+  def to_dict(self, include_category: bool=True, include_tag: bool=True):
       return {
           "id": self.id,
           "type": self.type,
           "date": self.date,
           "amount": self.amount,
           "payee": self.payee,
-          "category_tag_id": self.category_tag_id,
-          "category_tag": self.category_tag.to_dict(include_relations=True, include_transactions=False) if include_category_tag and self.category_tag else None
+          "category_id": self.category_id,
+          "tag_id": self.tag_id,
+          "category": self.category.to_dict(include_transactions=False) if include_category and self.category else None,
+          "tag": self.tag.to_dict(include_transactions=False) if include_tag and self.tag else None
       }
   
   @staticmethod

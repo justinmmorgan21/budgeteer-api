@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request
 from sqlalchemy import select
 from flask_cors import CORS
-from models import SessionLocal, Transaction, Category, Tag, Category_Tag
+from models import SessionLocal, Transaction, Category, Tag
 from werkzeug.exceptions import NotFound
 
 app = Flask(__name__)
@@ -67,7 +67,7 @@ def transaction_update(id):
     transaction = session.scalar(select(Transaction).where(Transaction.id==id))
     if not transaction:
             raise NotFound(f"Transaction with id {id} not found.")
-    transaction.category_tag_id = request.form.get("category_tag")
+    transaction.category_id = int(category_id) if category_id else None
     session.commit()
     return jsonify(transaction.to_dict())
    except Exception as e:
@@ -81,7 +81,7 @@ def category_index():
    session = SessionLocal()
    try:
     categories = session.scalars(select(Category)).all()
-    return jsonify([c.to_dict() for c in categories])
+    return jsonify([c.to_dict(True) for c in categories])
    except Exception as e:
         raise e
    finally:
@@ -96,36 +96,6 @@ def tag_index():
    except Exception as e:
         raise e
    finally:
-    session.close()
-
-@app.route('/category_tags', methods=['POST'])
-def category_tag_create():
-  session = SessionLocal()
-  try:
-    category = request.form.get("category")
-    tag = request.form.get("tag")
-    if not category or not tag:
-            return jsonify(error="Both category and tag are required"), 400
-    
-    ct = Category_Tag(category_id=category, tag_id=tag)
-    session.add(ct)
-    session.commit()
-    return jsonify(ct.to_dict())
-  except Exception as e:
-        session.rollback()
-        raise e
-  finally:
-    session.close()
-
-@app.route('/category_tags')
-def category_tag_index():
-  session = SessionLocal()
-  try:
-    cts = session.scalars(select(Category_Tag)).all()
-    return jsonify([ct.to_dict() for ct in cts])
-  except Exception as e:
-        raise e
-  finally:
     session.close()
 
 if __name__ == "__main__":

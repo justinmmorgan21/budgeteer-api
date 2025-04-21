@@ -30,10 +30,11 @@ def seed_tag_data():
   session = SessionLocal()
   try:
     tag_names = ["Misc", "from checking to savings", "FISD paycheck", "groceries", "Coserv electric", "Atmos gas"]
-    for tn in tag_names:
-      tag = Tag(name=tn)
+    category_ids = [1, 2, 2, 4, 3, 3]
+    for i in range(0, 6):
+      tag = Tag(name=tag_names[i], category_id=category_ids[i])
       session.add(tag)
-    session.add(Tag(name="dog walking", archived=True))
+    session.add(Tag(name="dog walking", archived=True, category_id=2))
     session.commit()
     return print({"message": f"Tag seed data created successfully. {len(tag_names) + 1} tags added."})
   finally:
