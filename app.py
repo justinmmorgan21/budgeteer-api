@@ -3,6 +3,7 @@ from sqlalchemy import select
 from flask_cors import CORS
 from models import SessionLocal, Transaction, Category, Tag
 from werkzeug.exceptions import NotFound
+from sqlalchemy.orm import joinedload
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -38,7 +39,10 @@ def transactions_create():
 def transaction_index():
   session = SessionLocal()
   try:
-    transactions = session.scalars(select(Transaction)).all()
+    transactions = session.query(Transaction).options(
+      joinedload(Transaction.category).joinedload(Category.tags),
+      joinedload(Transaction.tag)
+    ).all()
     if not transactions:
       raise NotFound(f"Transactions not found.")
     return jsonify([t.to_dict() for t in transactions])
@@ -67,8 +71,13 @@ def transaction_update(id):
     transaction = session.scalar(select(Transaction).where(Transaction.id==id))
     if not transaction:
       raise NotFound(f"Transaction with id {id} not found.")
-    transaction.category_id = int(category_id) if (category_id := request.form.get("category")) else transaction.category_id
-    transaction.tag_id = int(tag_id) if (tag_id := request.form.get("tag")) else transaction.tag_id
+    # transaction.category_id = int(category_id) if (category_id := request.form.get("category")) else transaction.category_id
+    # transaction.tag_id = int(tag_id) if (tag_id := request.form.get("tag")) else transaction.tag_id
+    category_id = request.form.get("category")
+    tag_id = request.form.get("tag")
+
+    transaction.category_id = int(category_id) if category_id else transaction.category_id
+    transaction.tag_id = int(tag_id) if tag_id not in [None, ""] else None
     session.commit()
     return jsonify(transaction.to_dict())
   except Exception as e:
@@ -96,6 +105,9 @@ def category_create():
     category = Category(name=name)
     session.add(category)
     session.commit()
+    tag = Tag(name='-', category_id=category.id)
+    session.add(tag)
+    session.commit()
     return jsonify(category.to_dict())
   except Exception as e:
     session.rollback()
@@ -117,3 +129,19 @@ def tag_index():
 
 if __name__ == "__main__":
   app.run(debug=True)
+
+@app.route('/tags', methods=['POST'])
+def tag_create():
+  session = SessionLocal()
+  try:
+    name = request.form.get('name')
+    category_id = request.form.get('category_id')
+    tag = Tag(name=name, category_id=category_id)
+    session.add(tag)
+    session.commit()
+    return jsonify(tag.to_dict())
+  except Exception as e:
+    session.rollback()
+    raise e
+  finally:
+    session.close()

@@ -1,4 +1,5 @@
 from models import Base, engine, SessionLocal, Transaction, Category, Tag
+from sqlalchemy import select
 
 Base.metadata.create_all(engine)
 print("budget database intialized!")
@@ -17,7 +18,7 @@ def seed_transaction_data():
 def seed_category_data():
   session = SessionLocal()
   try:
-    category_names = ["Misc", "Income", "Utilities", "Food", "Doctor"]
+    category_names = ["Misc", "Income", "Utilities", "Food", "Doctor", "Gas"]
     for cn in category_names:
       category = Category(name=cn)
       session.add(category)
@@ -35,11 +36,13 @@ def seed_tag_data():
       tag = Tag(name=tag_names[i], category_id=category_ids[i])
       session.add(tag)
     session.add(Tag(name="dog walking", archived=True, category_id=2))
+    categories = session.scalars(select(Category)).all()
+    for cat in categories:
+       session.add(Tag(name='-', category_id=cat.id))
     session.commit()
-    return print({"message": f"Tag seed data created successfully. {len(tag_names) + 1} tags added."})
+    return print({"message": f"Tag seed data created successfully. {len(tag_names) + 1 + len(categories)} tags added."})
   finally:
         session.close()
-
 
 seed_transaction_data()
 seed_category_data()
