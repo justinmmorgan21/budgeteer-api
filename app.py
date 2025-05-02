@@ -55,9 +55,9 @@ def transaction_index():
 def transaction_show(id):
   session = SessionLocal()
   try:
-    transaction = session.scalar(select(Transaction).where(Transaction.id==id))
+    transaction = session.get(Transaction, id)
     if not transaction:
-      raise NotFound(f"Transaction with id {id} not found.")
+      return jsonify({"error": f"Transaction with id {id} not found."}), 404
     return jsonify(transaction.to_dict())
   except Exception as e:
     raise e
@@ -68,14 +68,11 @@ def transaction_show(id):
 def transaction_update(id):
   session = SessionLocal()
   try:
-    transaction = session.scalar(select(Transaction).where(Transaction.id==id))
+    transaction = session.get(Transaction, id)
     if not transaction:
-      raise NotFound(f"Transaction with id {id} not found.")
-    # transaction.category_id = int(category_id) if (category_id := request.form.get("category")) else transaction.category_id
-    # transaction.tag_id = int(tag_id) if (tag_id := request.form.get("tag")) else transaction.tag_id
+      return jsonify({"error": f"Transaction with id {id} not found."}), 404
     category_id = request.form.get("category")
     tag_id = request.form.get("tag")
-
     transaction.category_id = int(category_id) if category_id else transaction.category_id
     transaction.tag_id = int(tag_id) if tag_id not in [None, ""] else None
     session.commit()
@@ -119,9 +116,9 @@ def category_create():
 def category_update(id):
   session = SessionLocal()
   try:
-    category = session.scalar(select(Category).where(Category.id==id))
+    category = session.get(Category, id)
     if not category:
-      raise NotFound(f"Category with id {id} not found.")
+      return jsonify({"error": f"Category with id {id} not found."}), 404
     name = request.form.get("catName")
     category.name = name or category.name
     session.commit()
@@ -166,18 +163,32 @@ def tag_create():
 def tag_update(id):
   session = SessionLocal()
   try:
-    tag = session.scalar(select(Tag).where(Tag.id==id))
+    tag = session.get(Tag, id)
     if not tag:
-      raise NotFound(f"Category with id {id} not found.")
+      return jsonify({"error": f"Tag with id {id} not found."}), 404
     name = request.form.get(str(tag.id))
-    print('**********')
-    print(name)
-    print('**********')
     tag.name = name or tag.name
     session.commit()
     return jsonify(tag.to_dict())
   except Exception as e:
     session.rollback()
     raise e
+  finally:
+    session.close()
+
+@app.route('/tags/<int:id>', methods=['DELETE'])
+def tag_delete(id):
+  session = SessionLocal()
+  try:
+    tag = session.get(Tag, id)
+    if not tag:
+      return jsonify({"error": f"Tag with id {id} not found."}), 404
+    tag_name = tag.name
+    session.delete(tag)
+    session.commit()
+    return jsonify({"message": f"Tag '{tag_name}' deleted successfully."})
+  except Exception as e:
+    session.rollback()
+    return jsonify({"error": str(e)}), 500
   finally:
     session.close()
