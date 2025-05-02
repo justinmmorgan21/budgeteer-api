@@ -114,7 +114,23 @@ def category_create():
     raise e
   finally:
     session.close()
-    
+
+@app.route('/categories/<int:id>', methods=['PATCH'])
+def category_update(id):
+  session = SessionLocal()
+  try:
+    category = session.scalar(select(Category).where(Category.id==id))
+    if not category:
+      raise NotFound(f"Category with id {id} not found.")
+    name = request.form.get("catName")
+    category.name = name or category.name
+    session.commit()
+    return jsonify(category.to_dict())
+  except Exception as e:
+    session.rollback()
+    raise e
+  finally:
+    session.close()
 
 @app.route('/tags')
 def tag_index():
@@ -138,6 +154,26 @@ def tag_create():
     category_id = request.form.get('category_id')
     tag = Tag(name=name, category_id=category_id)
     session.add(tag)
+    session.commit()
+    return jsonify(tag.to_dict())
+  except Exception as e:
+    session.rollback()
+    raise e
+  finally:
+    session.close()
+
+@app.route('/tags/<int:id>', methods=['PATCH'])
+def tag_update(id):
+  session = SessionLocal()
+  try:
+    tag = session.scalar(select(Tag).where(Tag.id==id))
+    if not tag:
+      raise NotFound(f"Category with id {id} not found.")
+    name = request.form.get(str(tag.id))
+    print('**********')
+    print(name)
+    print('**********')
+    tag.name = name or tag.name
     session.commit()
     return jsonify(tag.to_dict())
   except Exception as e:
