@@ -54,6 +54,11 @@ class Transaction(Base):
         amount = amount[1:-1]
     amount = Decimal(amount.replace(",",""))
     payee = remainder[remainder.find(" ") + 1:]
+    if payee.startswith("POSWithdrawal"):
+        payee = payee[13:]
+    if payee.startswith("ExternalWithdrawal"):
+        payee = payee[18:]
+    
     return Transaction(type=tx_type, date=date_obj, amount=amount, payee=payee)
 
   @staticmethod
