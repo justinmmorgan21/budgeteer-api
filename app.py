@@ -43,30 +43,22 @@ def transactions_create():
 def transaction_index():
   session = SessionLocal()
   try:
-    # page = request.args.get('page', 1, type=int)
-    # per_page = 10
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
     
-    # transactions_page = Transaction.query.paginate(page=page, per_page=per_page)
+    query = session.query(Transaction).options(
+        joinedload(Transaction.category).joinedload(Category.tags),
+        joinedload(Transaction.tag)
+      ).order_by(Transaction.date.desc())
     
-    # result = {
-    #     'transactions': [transaction.to_dict() for transaction in transactions_page.transactions],
-    #     'total_pages': transactions_page.pages,
-    #     'current_page': transactions_page.page
-    # }
-    # return jsonify(result)
-
-
-
-
-
-
-    transactions = session.query(Transaction).options(
-      joinedload(Transaction.category).joinedload(Category.tags),
-      joinedload(Transaction.tag)
-    ).order_by(Transaction.date.desc()).all()
-    if not transactions:
-      raise NotFound(f"Transactions not found.")
-    return jsonify([t.to_dict() for t in transactions])
+    total_count = query.count()
+    transactions = query.offset((page - 1) * per_page).limit(per_page).all()
+    
+    return jsonify({
+        'transactions': [t.to_dict() for t in transactions],
+        'total_pages': (total_count + per_page - 1) // per_page,
+        'current_page': page
+    })
   except Exception as e:
       raise e
   finally:
