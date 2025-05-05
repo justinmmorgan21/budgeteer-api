@@ -25,9 +25,13 @@ def transactions_create():
   session = SessionLocal()
   try:
     transactions = Transaction.read_statement(file_path)
+    # count = session.query(Transaction).all().count
+
     for t in transactions:
       session.add(t)
     session.commit()
+    # newTransactions = session.query(Transaction).filter(Transaction.id > count).all()
+    # print(newTransactions)
     return jsonify({"message": f"{len(transactions)} transactions added."})
   except Exception as e:
     session.rollback()
@@ -39,10 +43,27 @@ def transactions_create():
 def transaction_index():
   session = SessionLocal()
   try:
+    # page = request.args.get('page', 1, type=int)
+    # per_page = 10
+    
+    # transactions_page = Transaction.query.paginate(page=page, per_page=per_page)
+    
+    # result = {
+    #     'transactions': [transaction.to_dict() for transaction in transactions_page.transactions],
+    #     'total_pages': transactions_page.pages,
+    #     'current_page': transactions_page.page
+    # }
+    # return jsonify(result)
+
+
+
+
+
+
     transactions = session.query(Transaction).options(
       joinedload(Transaction.category).joinedload(Category.tags),
       joinedload(Transaction.tag)
-    ).all()
+    ).order_by(Transaction.date.desc()).all()
     if not transactions:
       raise NotFound(f"Transactions not found.")
     return jsonify([t.to_dict() for t in transactions])
