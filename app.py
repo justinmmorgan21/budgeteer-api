@@ -24,14 +24,11 @@ def transactions_create():
 
   session = SessionLocal()
   try:
-    transactions = Transaction.read_statement(file_path)
-    # count = session.query(Transaction).all().count
+    transactions = Transaction.read_statement(file_path, session)
 
     for t in transactions:
       session.add(t)
     session.commit()
-    # newTransactions = session.query(Transaction).filter(Transaction.id > count).all()
-    # print(newTransactions)
     return jsonify({"message": f"{len(transactions)} transactions added."})
   except Exception as e:
     session.rollback()

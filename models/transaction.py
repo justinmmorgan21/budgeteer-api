@@ -38,7 +38,7 @@ class Transaction(Base):
       }
   
   @staticmethod
-  def parseLine(line, transactions):
+  def parseLine(line, session):
     index = line.find(" ")
     date_str = line[0:index]
     year = "20" + date_str[-2:]
@@ -58,11 +58,14 @@ class Transaction(Base):
         payee = payee[13:]
     if payee.startswith("ExternalWithdrawal"):
         payee = payee[18:]
-    
-    return Transaction(type=tx_type, date=date_obj, amount=amount, payee=payee)
+    existing = session.query(Transaction).filter_by(payee=payee).order_by(Transaction.date.desc()).first()
+    return Transaction(
+        type=tx_type, date=date_obj, amount=amount, payee=payee,
+        category_id=existing.category_id if existing else None,
+        tag_id=existing.tag_id if existing else None)
 
   @staticmethod
-  def read_statement(pdf_path):
+  def read_statement(pdf_path, session):
       transactions = []
       with pdfplumber.open(pdf_path) as pdf:
           for i in range(7):
@@ -72,5 +75,5 @@ class Transaction(Base):
               lines = page_text.splitlines()
               for line in lines:
                   if re.search("^[0-9]+/[0-9]+/", line):
-                      transactions.append(Transaction.parseLine(line, transactions))
+                      transactions.append(Transaction.parseLine(line, session))
       return transactions

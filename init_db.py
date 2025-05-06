@@ -7,7 +7,7 @@ print("budget database intialized!")
 def seed_transaction_data():
   session = SessionLocal()
   try:
-    transactions = Transaction.read_statement("./seed-data/BECU-Statement-17-Jan-2025.pdf")
+    transactions = Transaction.read_statement("./seed-data/BECU-Statement-17-Jan-2025.pdf", session)
     for t in transactions:
       session.add(t)
     session.commit()
