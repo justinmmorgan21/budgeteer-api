@@ -178,6 +178,8 @@ def tag_update(id):
       return jsonify({"error": f"Tag with id {id} not found."}), 404
     name = request.form.get(str(tag.id))
     tag.name = name or tag.name
+    if request.form.get("archive"):
+      tag.archived = True
     session.commit()
     return jsonify(tag.to_dict())
   except Exception as e:
