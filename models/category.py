@@ -21,13 +21,14 @@ class Category(Base):
   def __repr__(self):
     return f"<Category({self.name}>"
   
-  def to_dict(self, include_transactions: bool=False):
+  def to_dict(self, include_tags: bool=True, include_transactions: bool=False):
     data = {
         "id": self.id,
         "name": self.name,
         "archived": self.archived,
-        "tags": [tag.to_dict() for tag in self.tags]
     }
+    if include_tags:
+      data["tags"] = [tag.to_dict() for tag in self.tags]
     if include_transactions:
       data["transactions"] = [tx.to_dict(False, False) for tx in self.transactions]
 

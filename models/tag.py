@@ -28,6 +28,7 @@ class Tag(Base):
     data = {
         "id": self.id,
         "category_id": self.category_id,
+        "category": self.category.to_dict(False,False),
         "name": self.name,
         "archived": self.archived,
     }

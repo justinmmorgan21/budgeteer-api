@@ -204,3 +204,18 @@ def tag_delete(id):
     return jsonify({"error": str(e)}), 500
   finally:
     session.close()
+
+@app.route('/archived')
+def archived_index():
+  session = SessionLocal()
+  try:
+    categories = session.scalars(select(Category).where(Category.archived==True)).all()
+    tags = session.scalars(select(Tag).where(Tag.archived==True)).all()
+    return jsonify({
+        'categories': [c.to_dict(True) for c in categories],
+        'tags': [t.to_dict(True) for t in tags]
+    })
+  except Exception as e:
+    raise e
+  finally:
+    session.close()
