@@ -130,6 +130,8 @@ def category_update(id):
     if not category:
       return jsonify({"error": f"Category with id {id} not found."}), 404
     name = request.form.get("catName")
+    if request.form.get("archive"):
+      category.archived = True
     category.name = name or category.name
     session.commit()
     return jsonify(category.to_dict())
