@@ -84,6 +84,9 @@ def transaction_update(id):
     if 'category_id' in request.form:
       category_id = request.form.get('category_id')
       transaction.category_id = int(category_id) if category_id not in [None, ""] else None
+      category = session.get(Category, category_id)
+      if category and category.name == '*ignore*':
+        transaction.tag_id = 8
     if 'tag_id' in request.form:
       tag_id = request.form.get('tag_id')
       transaction.tag_id = int(tag_id) if tag_id not in [None, ""] else None
