@@ -81,10 +81,12 @@ def transaction_update(id):
     transaction = session.get(Transaction, id)
     if not transaction:
       return jsonify({"error": f"Transaction with id {id} not found."}), 404
-    category_id = request.form.get('category')
-    tag_id = request.form.get('tag')
-    transaction.category_id = int(category_id) if category_id else transaction.category_id
-    transaction.tag_id = int(tag_id) if tag_id not in [None, ""] else None
+    if 'category_id' in request.form:
+      category_id = request.form.get('category_id')
+      transaction.category_id = int(category_id) if category_id not in [None, ""] else None
+    if 'tag_id' in request.form:
+      tag_id = request.form.get('tag_id')
+      transaction.tag_id = int(tag_id) if tag_id not in [None, ""] else None
     session.commit()
     return jsonify(transaction.to_dict())
   except Exception as e:
