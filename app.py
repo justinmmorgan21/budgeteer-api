@@ -41,7 +41,7 @@ def transaction_index():
   session = SessionLocal()
   try:
     page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 10, type=int)
+    per_page = request.args.get('per_page', 25, type=int)
     
     query = session.query(Transaction).options(
         joinedload(Transaction.category).joinedload(Category.tags),
@@ -158,9 +158,6 @@ def tag_index():
   finally:
     session.close()
 
-if __name__ == "__main__":
-  app.run(debug=True)
-
 @app.route('/tags', methods=['POST'])
 def tag_create():
   session = SessionLocal()
@@ -228,3 +225,7 @@ def archived_index():
     raise e
   finally:
     session.close()
+
+
+if __name__ == "__main__":
+  app.run(debug=True)

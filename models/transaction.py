@@ -6,6 +6,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .base import Base
 from datetime import date
 from decimal import Decimal
+from .category import Category
+from .tag import Tag
+
 
 class Transaction(Base):
   __tablename__ = "transactions"
@@ -59,6 +62,13 @@ class Transaction(Base):
     if payee.startswith("ExternalWithdrawal"):
         payee = payee[18:]
     existing = session.query(Transaction).filter_by(payee=payee).order_by(Transaction.date.desc()).first()
+    if not existing and payee.startswith("TransferDeposit ZelleFrom"):
+        category = session.query(Category).filter_by(name='Income').first()
+        tag = session.query(Tag).filter_by(name='hair').first()
+        return Transaction(
+            type=tx_type, date=date_obj, amount=amount, payee=payee,
+            category_id=category.id if category else None,
+            tag_id=tag.id if tag else None)
     return Transaction(
         type=tx_type, date=date_obj, amount=amount, payee=payee,
         category_id=existing.category_id if existing else None,
