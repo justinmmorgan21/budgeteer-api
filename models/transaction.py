@@ -1,14 +1,14 @@
 import pdfplumber
 import re
 from typing import List, Optional
-from sqlalchemy import ForeignKey, String, Numeric
+from sqlalchemy import ForeignKey, String, Numeric, DateTime, or_
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .base import Base
-from datetime import date
+from datetime import datetime, date
 from decimal import Decimal
 from .category import Category
 from .tag import Tag
-
+from sqlalchemy.orm import joinedload
 
 class Transaction(Base):
   __tablename__ = "transactions"
@@ -39,6 +39,41 @@ class Transaction(Base):
           "category": self.category.to_dict(include_transactions=False) if include_category and self.category else None,
           "tag": self.tag.to_dict(include_transactions=False) if include_tag and self.tag else None
       }
+  
+  @staticmethod
+  def filterQuery(session, request):
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 25, type=int)
+    search_term = request.args.get('search')
+    start_date = request.args.get('startDate')
+    end_date = request.args.get('endDate')
+
+    query = session.query(Transaction).options(
+      joinedload(Transaction.category).joinedload(Category.tags),
+      joinedload(Transaction.tag)
+    )
+    if start_date and end_date:
+        start_date_split = start_date.split('-')
+        start_datetime = datetime(int(start_date_split[0]), int(start_date_split[1]), int(start_date_split[2]))
+        end_date_split = end_date.split('-')
+        end_datetime = datetime(int(end_date_split[0]), int(end_date_split[1]), int(end_date_split[2]))
+        query = query.filter(
+            Transaction.date.between(start_datetime, end_datetime))
+    if search_term:
+      query = query.filter(
+        or_(
+          Transaction.type.ilike(f"%{search_term}%"),
+          Transaction.payee.ilike(f"%{search_term}%")
+        )
+      )
+    query = query.order_by(Transaction.date.desc())
+    total_count = query.count()
+    transactions = query.offset((page - 1) * per_page).limit(per_page).all()
+    return {
+        'transactions': [t.to_dict() for t in transactions],
+        'total_pages': (total_count + per_page - 1) // per_page,
+        'current_page': page
+    }
   
   @staticmethod
   def parseLine(line, session):
