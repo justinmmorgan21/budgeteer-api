@@ -70,8 +70,10 @@ def transaction_update(id):
             category_id = request.form.get('category_id')
             transaction.category_id = int(category_id) if category_id not in [None, ""] else None
             category = session.get(Category, category_id)
-            if category and category.name == '*ignore*':
-                transaction.tag_id = 8
+            num_tags = len(category.tags) if category else 0
+            if category and category.name == '*ignore*' or num_tags == 1:
+                tag = session.query(Tag).filter(Tag.name=="-").first()
+                transaction.tag_id = tag.id
         if 'tag_id' in request.form:
             tag_id = request.form.get('tag_id')
             transaction.tag_id = int(tag_id) if tag_id not in [None, ""] else None
@@ -121,9 +123,12 @@ def category_update(id):
             return jsonify({"error": f"Category with id {id} not found."}), 404
         name = request.form.get('catName')
         archive = request.form.get('archive')
+        budget = request.form.get('budget')
         category.name = name or category.name
         if archive:
             category.archived = archive == "true"
+        if budget:
+            category.budget_amount = float(budget)
         session.commit()
         return jsonify(category.to_dict())
     except Exception as e:

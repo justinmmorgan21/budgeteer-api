@@ -18,7 +18,9 @@ def seed_transaction_data():
 def seed_category_data():
     session = SessionLocal()
     try:
-        category_names = ["Misc", "Income", "Utilities", "Food", "Doctor", "Gas"]
+        category_names = ["Misc", "Income", "Utilities", "Food", "Doctor", "Gas", "Actualize repayment", "*ignore*",
+                          "Samaritans share", "Toll", "Charity", "Pet", "Investment", "Mortgage", "Entertainment", "Phone",
+                          "Amazon Prime membership", "HOA", "Justin App resources", "Hair Supplies", "Travel", "Clothing", "Car"]
         for cn in category_names:
             category = Category(name=cn)
             session.add(category)
@@ -30,15 +32,20 @@ def seed_category_data():
 def seed_tag_data():
     session = SessionLocal()
     try:
-        tag_names = ["Misc", "from checking to savings", "FISD paycheck", "groceries", "Coserv electric", "Atmos gas"]
-        category_ids = [1, 2, 2, 4, 3, 3]
-        for i in range(0, 6):
-            tag = Tag(name=tag_names[i], category_id=category_ids[i])
-            session.add(tag)
-        session.add(Tag(name="dog walking", archived=True, category_id=2))
         categories = session.scalars(select(Category)).all()
         for cat in categories:
             session.add(Tag(name='-', category_id=cat.id))
+        tag_names = ["amazon", "travel", "prime video", "target", "paypal", "sports", "gardening", "venmo", "supplements",
+                     "federal taxes", "FISD paycheck", "hair", "coserv electric", "atmos gas", "water/garbage", "internet",
+                     "groceries", "eating out", "alcohol", "pt", "justin shoulder", "prescription", "dentist", "younglife",
+                     "compassion int", "children int", "tithe", "donation", "gift", "kim - american funds", "transfer to savings",
+                     "prime video", "trail life", "kim at&t", "justin verizon", "serpapi", "openAI", "wash"]
+        category_ids = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3, 3, 3, 3, 4, 4, 4, 5, 5, 5, 5, 11, 11, 11, 11, 11, 11, 13, 13,
+                        15, 15, 16, 16, 19, 19, 23]
+        for i in range(0, len(tag_names)):
+            tag = Tag(name=tag_names[i], category_id=category_ids[i])
+            session.add(tag)
+        session.add(Tag(name="dog walking", archived=True, category_id=2))
         session.commit()
         return print({"message": f"Tag seed data created successfully. {len(tag_names) + 1 + len(categories)} tags added."})
     finally:
