@@ -85,7 +85,7 @@ class Transaction(Base):
         }
   
     @staticmethod
-    def parseLine(line, session):
+    def parseStatementLine(line, session):
         index = line.find(" ")
         date_str = line[0:index]
         year = "20" + date_str[-2:]
@@ -96,17 +96,19 @@ class Transaction(Base):
         index = remainder.find(" ")
         amount = remainder[0:index]
         tx_type = "DEPOSIT"
-        if (amount[0] == "("):
+        if amount[0] == "(":
             tx_type = "WITHDRAWAL"   
             amount = amount[1:-1]
         amount = Decimal(amount.replace(",",""))
         payee = remainder[remainder.find(" ") + 1:]
         if payee.startswith("POSWithdrawal"):
-            payee = payee[13:]
+            payee = payee[14:]
         if payee.startswith("ExternalWithdrawal"):
             payee = payee[18:]
+        payee = re.sub("^0{5,}", "", payee)
+        payee = re.sub("\s+", "", payee)
         existing = session.query(Transaction).filter_by(payee=payee).order_by(Transaction.date.desc()).first()
-        if not existing and payee.startswith("TransferDeposit ZelleFrom"):
+        if not existing and payee.startswith("TransferDepositZelleFrom"):
             category = session.query(Category).filter_by(name='Income').first()
             tag = session.query(Tag).filter_by(name='hair').first()
             return Transaction(
@@ -122,12 +124,99 @@ class Transaction(Base):
     def read_statement(pdf_path, session):
         transactions = []
         with pdfplumber.open(pdf_path) as pdf:
-            for i in range(7):
+            for i in range(len(pdf.pages)):
                 page = pdf.pages[i]
                 cropped = page.crop((0, 0.1 * float(page.height), page.width, page.height))
                 page_text = cropped.extract_text()
                 lines = page_text.splitlines()
                 for line in lines:
                     if re.search("^[0-9]+/[0-9]+/", line):
-                        transactions.append(Transaction.parseLine(line, session))
+                        transactions.append(Transaction.parseStatementLine(line, session))
         return transactions
+
+    @staticmethod
+    def read_current_transaction_history(pdf_path, session):
+        transactions = []
+        with pdfplumber.open(pdf_path) as pdf:
+            lines = []
+            for i in range(len(pdf.pages)):
+                page = pdf.pages[i]
+                cropped = page.crop((0, 0.05 * float(page.height), page.width, page.height))
+                page_text = cropped.extract_text()
+                lines.extend(page_text.splitlines())
+            lineA = lines[1]
+            tokens = lineA.split(" ")
+            i = 1
+            while len(tokens) < 2 or not tokens[len(tokens)-1].startswith("$") or not tokens[len(tokens)-2].startswith("$"):
+                i = i + 1
+                lineA = lines[i]
+                tokens = lineA.split(" ")
+
+            while i < len(lines):
+                start = 0
+                lastDollar = Transaction.findLastIndex(lineA, "$", len(lineA))
+                nextLastDollar = Transaction.findLastIndex(lineA, "$", lastDollar)
+                if lineA.startswith("POS Withdrawal -"):
+                    start = 16
+                elif lineA.startswith("External Withdrawal -"):
+                    start = 22
+                payee = lineA[start:nextLastDollar]
+                amount = float(re.sub(",", "", lineA[nextLastDollar+1:lastDollar-1]))
+                new_balance = float(re.sub(",", "", lineA[lastDollar+1:]))
+                nextLine = lines[i+1]
+                firstSlash = nextLine.index("/")
+                secondSlash = nextLine.index("/", firstSlash + 1)
+                year = nextLine[secondSlash+1:]
+                month = nextLine[0:firstSlash]
+                day = nextLine[firstSlash+1:secondSlash]
+                date_obj = date(int(year), int(month), int(day))
+                # if not lineA.startswith("https://onlinebanking.becu") and not lineA.startswith("Post"):
+                #     payee = payee + lineA
+                i = i + 1
+                lineA = lines[i]
+                lineA = re.sub("[0-9]+/[0-9]+/[0-9]+", "", lineA)
+                while not lineA:
+                    i = i + 1
+                    lineA = lines[i]
+                    lineA = re.sub("[0-9]+/[0-9]+/[0-9]+", "", lineA)
+                tokens = lineA.split(" ")
+                while lineA and (not tokens[len(tokens)-1].startswith("$") or not tokens[len(tokens)-2].startswith("$")):
+                    if not lineA.startswith("https://onlinebanking.becu") and not lineA.startswith("Post"):
+                        payee = payee + lineA
+                    i = i + 1
+                    lineA = lines[i] if i < len(lines) else None
+                    lineA = re.sub("[0-9]+/[0-9]+/[0-9]+", "", lineA) if lineA else None
+                    while i < len(lines) - 1 and not lineA:
+                        i = i + 1
+                        lineA = lines[i]
+                        lineA = re.sub("[0-9]+/[0-9]+/[0-9]+", "", lineA)
+                    tokens = lineA.split(" ") if lineA else None
+                payee = re.sub("\s+", "", payee)
+                if "-CardEndingIn" in payee:
+                    payee = payee[0:Transaction.findLastIndex(payee, "-", len(payee))]
+                payee = re.sub("^0{5,}", "", payee)
+                lastDollar = Transaction.findLastIndex(lineA, "$", len(lineA)) if lineA else None
+                old_balance = float(re.sub(",", "", lineA[lastDollar+1:])) if lineA else 0
+                tx_type = "DEPOSIT" if old_balance < new_balance else "WITHDRAWAL"
+                existing = session.query(Transaction).filter_by(payee=payee).order_by(Transaction.date.desc()).first()
+                if not existing and payee.startswith("TransferDepositZelleFrom"):
+                    category = session.query(Category).filter_by(name='Income').first()
+                    tag = session.query(Tag).filter_by(name='hair').first()
+                    transactions.append(Transaction(
+                        type=tx_type, date=date_obj, amount=amount, payee=payee,
+                        category_id=category.id if category else None,
+                        tag_id=tag.id if tag else None))
+                else:
+                    transactions.append(Transaction(
+                        type=tx_type, date=date_obj, amount=amount, payee=payee,
+                        category_id=existing.category_id if existing else None,
+                        tag_id=existing.tag_id if existing else None))
+        return transactions
+
+    @staticmethod
+    def findLastIndex(str, key, endIndex):
+        index = -1
+        for i in range(0, endIndex):
+            if str[i] == key:
+                index = i
+        return index

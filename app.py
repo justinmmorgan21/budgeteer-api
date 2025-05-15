@@ -24,7 +24,12 @@ def transactions_create():
 
     session = SessionLocal()
     try:
-        transactions = Transaction.read_statement(file_path, session)
+        upload_type = request.form.get('uploadType')
+        transactions = None
+        if upload_type == "statement":
+            transactions = Transaction.read_statement(file_path, session)
+        elif upload_type == "currentHistory":
+            transactions = Transaction.read_current_transaction_history(file_path, session)
         for t in transactions:
             session.add(t)
         session.commit()
