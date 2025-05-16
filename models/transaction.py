@@ -198,19 +198,23 @@ class Transaction(Base):
                 lastDollar = Transaction.findLastIndex(lineA, "$", len(lineA)) if lineA else None
                 old_balance = float(re.sub(",", "", lineA[lastDollar+1:])) if lineA else 0
                 tx_type = "DEPOSIT" if old_balance < new_balance else "WITHDRAWAL"
-                existing = session.query(Transaction).filter_by(payee=payee).order_by(Transaction.date.desc()).first()
-                if not existing and payee.startswith("TransferDepositZelleFrom"):
+                existing_payee = session.query(Transaction).filter_by(payee=payee).order_by(Transaction.date.desc()).first()
+                existing_full_match = session.query(Transaction).filter_by(type=tx_type, date=date_obj, amount=amount, payee=payee).first()
+                # for tx in existing_payees:
+                #     if tx.type == tx_type and str(tx.date) == str(date_obj) and tx.amount == amount and tx.payee == payee:
+                #         existing_full_match = True
+                if not existing_full_match and not existing_payee and payee.startswith("TransferDepositZelleFrom"):
                     category = session.query(Category).filter_by(name='Income').first()
                     tag = session.query(Tag).filter_by(name='hair').first()
                     transactions.append(Transaction(
                         type=tx_type, date=date_obj, amount=amount, payee=payee,
                         category_id=category.id if category else None,
                         tag_id=tag.id if tag else None))
-                else:
+                elif not existing_full_match:
                     transactions.append(Transaction(
                         type=tx_type, date=date_obj, amount=amount, payee=payee,
-                        category_id=existing.category_id if existing else None,
-                        tag_id=existing.tag_id if existing else None))
+                        category_id=existing_payee.category_id if existing_payee else None,
+                        tag_id=existing_payee.tag_id if existing_payee else None))
         return transactions
 
     @staticmethod
