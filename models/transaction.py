@@ -200,9 +200,6 @@ class Transaction(Base):
                 tx_type = "DEPOSIT" if old_balance < new_balance else "WITHDRAWAL"
                 existing_payee = session.query(Transaction).filter_by(payee=payee).order_by(Transaction.date.desc()).first()
                 existing_full_match = session.query(Transaction).filter_by(type=tx_type, date=date_obj, amount=amount, payee=payee).first()
-                # for tx in existing_payees:
-                #     if tx.type == tx_type and str(tx.date) == str(date_obj) and tx.amount == amount and tx.payee == payee:
-                #         existing_full_match = True
                 if not existing_full_match and not existing_payee and payee.startswith("TransferDepositZelleFrom"):
                     category = session.query(Category).filter_by(name='Income').first()
                     tag = session.query(Tag).filter_by(name='hair').first()
