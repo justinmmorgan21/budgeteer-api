@@ -176,11 +176,13 @@ def tag_update(id):
         tag = session.get(Tag, id)
         if not tag:
             return jsonify({"error": f"Tag with id {id} not found."}), 404
-        name = request.form.get(str(tag.id))
+        name = request.form.get(str(tag.id)+"_name")
         archive = request.form.get('archive')
+        new_budget = request.form.get(str(tag.id)+"_budget")
         tag.name = name or tag.name
         if archive:
             tag.archived = archive == 'true'
+        tag.budget_amount = float(new_budget) if new_budget else tag.budget_amount
         session.commit()
         return jsonify(tag.to_dict())
     except Exception as e:

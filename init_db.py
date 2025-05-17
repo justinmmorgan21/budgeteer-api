@@ -25,7 +25,7 @@ def seed_tag_data():
         for cat in categories:
             session.add(Tag(name='-', category_id=cat.id))
         tag_names = ["amazon", "travel", "prime video", "target", "paypal", "sports", "gardening", "venmo", "supplements",
-                     "federal taxes", "home", "FISD paycheck", "hair", "coserv electric", "atmos gas", "water/garbage", "internet",
+                     "federal taxes", "home", "fisd paycheck", "hair", "coserv electric", "atmos gas", "water/garbage", "internet",
                      "groceries", "eating out", "alcohol", "pt", "justin shoulder", "prescription", "dentist", "younglife",
                      "compassion int", "children int", "tithe", "donation", "gift", "kim - american funds", "transfer to savings",
                      "prime video", "trail life", "sports", "kim at&t", "justin verizon", "serpapi", "openAI", "wash"]
@@ -33,6 +33,8 @@ def seed_tag_data():
                         15, 15, 15, 16, 16, 19, 19, 23]
         for i in range(0, len(tag_names)):
             tag = Tag(name=tag_names[i], category_id=category_ids[i])
+            if i == 11:
+                tag.budget_amount = 5000
             session.add(tag)
         session.add(Tag(name="hulu", archived=True, category_id=15))
         session.commit()
