@@ -62,10 +62,12 @@ class Transaction(Base):
                 Transaction.date.between(start_datetime, end_datetime)
             )
         if search_term:
-            query = query.filter(
+            query = query.outerjoin(Transaction.category).outerjoin(Transaction.tag).filter(
                 or_(
                     Transaction.type.ilike(f"%{search_term}%"),
-                    Transaction.payee.ilike(f"%{search_term}%")
+                    Transaction.payee.ilike(f"%{search_term}%"),
+                    Category.name.ilike(f"%{search_term}%"),
+                    Tag.name.ilike(f"%{search_term}%"),
                 )
             )
         if uncategorized == "true":
