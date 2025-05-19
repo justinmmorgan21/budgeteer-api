@@ -146,6 +146,7 @@ class Transaction(Base):
                 cropped = page.crop((0, 0.05 * float(page.height), page.width, page.height))
                 page_text = cropped.extract_text()
                 lines.extend(page_text.splitlines())
+            print(lines)
             lineA = lines[1]
             tokens = lineA.split(" ")
             i = 1
@@ -183,7 +184,8 @@ class Transaction(Base):
                     lineA = re.sub("[0-9]+/[0-9]+/[0-9]+", "", lineA)
                 tokens = lineA.split(" ")
                 while lineA and (not tokens[len(tokens)-1].startswith("$") or not tokens[len(tokens)-2].startswith("$")):
-                    if not lineA.startswith("https://onlinebanking.becu") and not lineA.startswith("Post"):
+                    if not lineA.startswith("https://onlinebanking.becu") and not lineA.startswith("Post") and \
+                        lineA != '< Prev Next >' and lineA != '#':
                         payee = payee + lineA
                     i = i + 1
                     lineA = lines[i] if i < len(lines) else None
@@ -198,7 +200,7 @@ class Transaction(Base):
                     payee = payee[0:Transaction.findLastIndex(payee, "-", len(payee))]
                 payee = re.sub("^0{5,}", "", payee)
                 lastDollar = Transaction.findLastIndex(lineA, "$", len(lineA)) if lineA else None
-                old_balance = float(re.sub(",", "", lineA[lastDollar+1:])) if lineA else 0
+                old_balance = float(re.sub(",", "", lineA[lastDollar+1:])) if lineA else new_balance + 1
                 tx_type = "DEPOSIT" if old_balance < new_balance else "WITHDRAWAL"
                 existing_payee = session.query(Transaction).filter_by(payee=payee).order_by(Transaction.date.desc()).first()
                 existing_full_match = session.query(Transaction).filter_by(type=tx_type, date=date_obj, amount=amount, payee=payee).first()
