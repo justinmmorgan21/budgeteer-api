@@ -21,8 +21,10 @@ class Transaction(Base):
     category_id: Mapped[Optional[int]] = mapped_column(ForeignKey("categories.id"))
     tag_id: Mapped[Optional[int]] = mapped_column(ForeignKey("tags.id"))
     
-    category: Mapped[Optional["Category"]] = relationship(back_populates="transactions")
-    tag: Mapped[Optional["Tag"]] = relationship(back_populates="transactions")
+    category: Mapped[Optional["Category"]] = relationship(back_populates="transactions", lazy='joined')
+    # category: Mapped[Optional["Category"]] = relationship(back_populates="transactions")
+    tag: Mapped[Optional["Tag"]] = relationship(back_populates="transactions", lazy='joined')
+    # tag: Mapped[Optional["Tag"]] = relationship(back_populates="transactions")
 
     def __repr__(self):
         return f"<Transaction({self.type}, {self.date}, {self.amount}, {self.payee})>"
@@ -50,8 +52,10 @@ class Transaction(Base):
         uncategorized = request.args.get('uncategorized')
 
         query = session.query(Transaction).options(
-            joinedload(Transaction.category).joinedload(Category.tags),
-            joinedload(Transaction.tag)
+            joinedload(Transaction.category),
+            # joinedload(Transaction.category).joinedload(Category.tags),
+            joinedload(Transaction.tag).joinedload(Tag.category)
+            # joinedload(Transaction.tag)
         )
         if start_date and end_date:
             start_date_split = start_date.split('-')

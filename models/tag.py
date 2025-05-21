@@ -14,13 +14,11 @@ class Tag(Base):
 
     category_id: Mapped[Optional[int]] = mapped_column(ForeignKey("categories.id"))
 
-    category: Mapped["Category"] = relationship(
-        back_populates="tags"
-    )
+    category: Mapped["Category"] = relationship(back_populates="tags", lazy='joined')
+    # category: Mapped["Category"] = relationship(back_populates="tags")
     
-    transactions: Mapped[List["Transaction"]] = relationship(
-        back_populates="tag", cascade="all, delete-orphan"
-    )
+    transactions: Mapped[List["Transaction"]] = relationship(back_populates="tag", cascade="all, delete-orphan", lazy='selectin')
+    # transactions: Mapped[List["Transaction"]] = relationship(back_populates="tag", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<Tag({self.name}>"

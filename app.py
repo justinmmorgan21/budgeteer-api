@@ -3,7 +3,7 @@ from sqlalchemy import select
 from flask_cors import CORS
 from models import SessionLocal, Transaction, Category, Tag
 from werkzeug.exceptions import NotFound
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -90,16 +90,34 @@ def transaction_update(id):
     finally:
         session.close()
 
+# @app.route('/categories')
+# def category_index():
+#     session = SessionLocal()
+#     try:
+#         categories = session.scalars(select(Category)).all()
+#         return jsonify([c.to_dict(True) for c in categories])
+#     except Exception as e:
+#         raise e
+#     finally:
+#         session.close()
+
+
 @app.route('/categories')
 def category_index():
     session = SessionLocal()
     try:
-        categories = session.scalars(select(Category)).all()
+        query = select(Category).options(
+            selectinload(Category.tags),
+            selectinload(Category.transactions)
+        )
+        categories = session.scalars(query).all()
         return jsonify([c.to_dict(True) for c in categories])
     except Exception as e:
         raise e
     finally:
         session.close()
+
+
 
 @app.route('/categories', methods=['POST'])
 def category_create():
@@ -146,7 +164,11 @@ def category_update(id):
 def tag_index():
     session = SessionLocal()
     try:
-        tags = session.scalars(select(Tag)).all()
+        query = select(Tag).options(
+            selectinload(Tag.transactions)
+        )
+        tags = session.scalars(query).all()
+        # tags = session.scalars(select(Tag)).all()
         return jsonify([t.to_dict() for t in tags])
     except Exception as e:
         raise e

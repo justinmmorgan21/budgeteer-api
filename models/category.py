@@ -13,10 +13,12 @@ class Category(Base):
     budget_amount: Mapped[float] = mapped_column(Numeric(10, 2), default=0.0)
 
     tags: Mapped[List["Tag"]] = relationship(
-        back_populates="category", cascade="all, delete-orphan"
+        back_populates="category", lazy="selectin", cascade="all, delete-orphan"
+        # back_populates="category", cascade="all, delete-orphan"
     )
     transactions: Mapped[List["Transaction"]] = relationship(
-        back_populates="category", cascade="all, delete-orphan"
+        back_populates="category", lazy="selectin", cascade="all, delete-orphan"
+        # back_populates="category", cascade="all, delete-orphan"
     )
 
     def __repr__(self):
