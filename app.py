@@ -2,7 +2,6 @@ from flask import Flask, jsonify, request
 from sqlalchemy import select
 from flask_cors import CORS
 from models import SessionLocal, Transaction, Category, Tag
-from werkzeug.exceptions import NotFound
 from sqlalchemy.orm import joinedload, selectinload
 
 app = Flask(__name__)

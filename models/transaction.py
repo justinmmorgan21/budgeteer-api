@@ -22,9 +22,17 @@ class Transaction(Base):
     tag_id: Mapped[Optional[int]] = mapped_column(ForeignKey("tags.id"))
     
     category: Mapped[Optional["Category"]] = relationship(back_populates="transactions", lazy='joined')
-    # category: Mapped[Optional["Category"]] = relationship(back_populates="transactions")
     tag: Mapped[Optional["Tag"]] = relationship(back_populates="transactions", lazy='joined')
-    # tag: Mapped[Optional["Tag"]] = relationship(back_populates="transactions")
+
+    parent_transaction_id: Mapped[Optional[int]] = mapped_column(ForeignKey("transactions.id"))
+    parent_transaction: Mapped[Optional["Transaction"]] = relationship(
+        back_populates="child_transactions",
+        remote_side="Transaction.id"
+    )
+    child_transactions: Mapped[List["Transaction"]] = relationship(
+        back_populates="parent_transaction",
+        cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         return f"<Transaction({self.type}, {self.date}, {self.amount}, {self.payee})>"
