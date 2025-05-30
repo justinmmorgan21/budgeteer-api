@@ -3,6 +3,7 @@ from sqlalchemy import select
 from flask_cors import CORS
 from models import SessionLocal, Transaction, Category, Tag
 from sqlalchemy.orm import joinedload, selectinload
+from datetime import date, datetime
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -17,7 +18,7 @@ def handle_exception(e):
 def transactions_create():
     file = request.files['file']
     if not file:
-        return jsonify(error="No file uploded"), 400
+        return jsonify(error="No file uploaded"), 400
     file_path = f"./uploads/{file.filename}"
     file.save(file_path)
 
@@ -36,6 +37,34 @@ def transactions_create():
     except Exception as e:
         session.rollback()
         raise e
+    finally:
+        session.close()
+
+@app.route('/transactions/<int:id>', methods=['POST'])
+def transaction_create(id):
+    session = SessionLocal()
+    try:
+        parent = session.get(Transaction, id)
+        if not parent:
+            return jsonify({"error": f"Transaction with id {id} not found."}), 404
+        # for child in parent.child_transactions:
+        #     session.delete(child)
+        tx_type = parent.type
+        date_obj = parent.date
+        payee = parent.payee
+        amount = float(request.form.get('amount', 0))
+        category_id = int(request.form.get('category_id'))
+        tag_id = int(request.form.get('tag_id'))
+        transaction = Transaction(
+            type=tx_type, date=date_obj, amount=amount, payee=payee,
+            category_id=category_id, tag_id=tag_id, parent_transaction_id=parent.id)
+        session.add(transaction)
+        session.commit()
+        return jsonify(transaction.to_dict())
+    except Exception as e:
+        session.rollback()
+        print("Error:", e)  # Optional, but helpful
+        return jsonify({"error": str(e)}), 500
     finally:
         session.close()
 

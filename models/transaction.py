@@ -47,7 +47,9 @@ class Transaction(Base):
             "category_id": self.category_id,
             "tag_id": self.tag_id,
             "category": self.category.to_dict(include_transactions=False) if include_category and self.category else None,
-            "tag": self.tag.to_dict(include_transactions=False) if include_tag and self.tag else None
+            "tag": self.tag.to_dict(include_transactions=False) if include_tag and self.tag else None,
+            "parent_transaction_id": self.parent_transaction_id,
+            "child_transactions": [t.id for t in self.child_transactions]
         }
   
     @staticmethod
