@@ -41,29 +41,32 @@ def transactions_create():
         session.close()
 
 @app.route('/transactions/<int:id>', methods=['POST'])
-def transaction_create(id):
+def child_transactions_create(id):
     session = SessionLocal()
     try:
         parent = session.get(Transaction, id)
         if not parent:
             return jsonify({"error": f"Transaction with id {id} not found."}), 404
-        # for child in parent.child_transactions:
-        #     session.delete(child)
+        for child in parent.child_transactions:
+            session.delete(child)
+        session.commit()
         tx_type = parent.type
         date_obj = parent.date
         payee = parent.payee
-        amount = float(request.form.get('amount', 0))
-        category_id = int(request.form.get('category_id'))
-        tag_id = int(request.form.get('tag_id'))
-        transaction = Transaction(
-            type=tx_type, date=date_obj, amount=amount, payee=payee,
-            category_id=category_id, tag_id=tag_id, parent_transaction_id=parent.id)
-        session.add(transaction)
+        splits = request.get_json()
+        for split in splits:
+            amount = float(split['amount'])
+            category_id = int(split['category']['id'])
+            tag_id = int(split['tag']['id'])
+            transaction = Transaction(
+                type=tx_type, date=date_obj, amount=amount, payee=payee,
+                category_id=category_id, tag_id=tag_id, parent_transaction_id=parent.id)
+            session.add(transaction)
         session.commit()
-        return jsonify(transaction.to_dict())
+        return jsonify({"message": f"{len(splits)} transactions added."})
     except Exception as e:
         session.rollback()
-        print("Error:", e)  # Optional, but helpful
+        print("Error:", e)
         return jsonify({"error": str(e)}), 500
     finally:
         session.close()
