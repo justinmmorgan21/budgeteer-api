@@ -14,22 +14,20 @@ class Category(Base):
 
     tags: Mapped[List["Tag"]] = relationship(
         back_populates="category", lazy="selectin", cascade="all, delete-orphan"
-        # back_populates="category", cascade="all, delete-orphan"
     )
     transactions: Mapped[List["Transaction"]] = relationship(
         back_populates="category", lazy="selectin", cascade="all, delete-orphan"
-        # back_populates="category", cascade="all, delete-orphan"
     )
 
     def __repr__(self):
         return f"<Category({self.name}>"
     
-    def to_dict(self, include_tags: bool=True, include_transactions: bool=False):
+    def to_dict(self, include_tags: bool=True, include_transactions: bool=False, start_date: bool=False, end_date: bool=False):
         data = {
             "id": self.id,
             "name": self.name,
             "archived": self.archived,
-            "accumulated": self.accumulated(),
+            "accumulated": self.accumulated(start_date, end_date),
             "budget_amount": self.budget_amount
         }
         if include_tags:
@@ -38,10 +36,16 @@ class Category(Base):
             data["transactions"] = [tx.to_dict(False, False) for tx in self.transactions]
         return data
     
-    def accumulated(self):
-        today = date.today()
-        first = date(today.year, today.month, 1)
-        last = date(today.year, today.month, self.get_last_day(today.year, today.month))
+    def accumulated(self, start_date, end_date):
+        if start_date and end_date:
+            year, month, day = map(int, start_date.split("-"))
+            first = date(year, month, day)
+            year, month, day = map(int, end_date.split("-"))
+            last = date(year, month, day)
+        else:
+            today = date.today()
+            first = date(today.year, today.month, 1)
+            last = date(today.year, today.month, self.get_last_day(today.year, today.month))
         transactions = self.transactions
         total = 0
         for transaction in transactions:

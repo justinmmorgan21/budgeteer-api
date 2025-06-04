@@ -63,9 +63,7 @@ class Transaction(Base):
 
         query = session.query(Transaction).options(
             joinedload(Transaction.category),
-            # joinedload(Transaction.category).joinedload(Category.tags),
             joinedload(Transaction.tag).joinedload(Tag.category)
-            # joinedload(Transaction.tag)
         )
         if start_date and end_date:
             start_date_split = start_date.split('-')
@@ -160,7 +158,6 @@ class Transaction(Base):
                 cropped = page.crop((0, 0.05 * float(page.height), page.width, page.height))
                 page_text = cropped.extract_text()
                 lines.extend(page_text.splitlines())
-            print(lines)
             lineA = lines[1]
             tokens = lineA.split(" ")
             i = 1
@@ -212,7 +209,8 @@ class Transaction(Base):
                 payee = re.sub("\s+", "", payee)
                 if "-CardEndingIn" in payee:
                     payee = payee[0:Transaction.findLastIndex(payee, "-", len(payee))]
-                payee = re.sub("^0{5,}", "", payee)
+                payee = re.sub("^X{5,}", "", payee)
+                payee = re.sub("^0{3,}", "", payee)
                 lastDollar = Transaction.findLastIndex(lineA, "$", len(lineA)) if lineA else None
                 old_balance = float(re.sub(",", "", lineA[lastDollar+1:])) if lineA else new_balance + 1
                 tx_type = "DEPOSIT" if old_balance < new_balance else "WITHDRAWAL"

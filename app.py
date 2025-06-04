@@ -121,18 +121,6 @@ def transaction_update(id):
     finally:
         session.close()
 
-# @app.route('/categories')
-# def category_index():
-#     session = SessionLocal()
-#     try:
-#         categories = session.scalars(select(Category)).all()
-#         return jsonify([c.to_dict(True) for c in categories])
-#     except Exception as e:
-#         raise e
-#     finally:
-#         session.close()
-
-
 @app.route('/categories')
 def category_index():
     session = SessionLocal()
@@ -141,14 +129,17 @@ def category_index():
             selectinload(Category.tags),
             selectinload(Category.transactions)
         )
+        start_date = request.args.get('startDate')
+        end_date = request.args.get('endDate')
         categories = session.scalars(query).all()
-        return jsonify([c.to_dict(True) for c in categories])
+        if start_date and end_date:
+            return jsonify([c.to_dict(True, False, start_date, end_date) for c in categories])
+        else:
+            return jsonify([c.to_dict(True) for c in categories])
     except Exception as e:
         raise e
     finally:
         session.close()
-
-
 
 @app.route('/categories', methods=['POST'])
 def category_create():
